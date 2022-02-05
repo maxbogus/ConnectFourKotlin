@@ -1,5 +1,7 @@
 package connectfour
 
+val REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*[5-9]\\s*$)")
+
 fun main() {
     println("Connect Four")
     println("First player's name:")
@@ -12,13 +14,14 @@ fun main() {
     do {
         showBoardDemensionsMessage(errorShouldBeShown)
         val userInput = readLine()!!
-        if (!userInput.matches(Regex("^[5-9]\\s?[xX]\\s?[5-9]$"))) {
+        if (!userInput.matches(REGEX)) {
             errorShouldBeShown = true
         } else {
-            rows = userInput.first()
-            columns = userInput.last()
+            val list = userInput.filter { it.isDigit() }
+            rows = list.first()
+            columns = list.last()
         }
-    } while (userInput != "" && !userInput.matches(Regex("^[5-9]\\s?[xX]\\s?[5-9]$")))
+    } while (userInput != "" && !userInput.matches(REGEX))
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
 }
