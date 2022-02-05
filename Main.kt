@@ -1,6 +1,6 @@
 package connectfour
 
-val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*[5-9]\\s*$)")
+val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]{1}\\s*[xX]\\s*[5-9]{1}\\s*$)")
 val INVALID_ROW_BOARD_REGEX = Regex("(^\\s*\\d+\\s*[xX]\\s*[5-9]\\s*\$)")
 val INVALID_COLUMN_BOARD_REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*\\d+\\s*\$)")
 
@@ -11,16 +11,17 @@ fun main() {
 }
 
 private fun drawBoard(rows: Int, columns: Int) {
-    for (row in 0..rows) {
+    val limit = rows + 1
+    for (row in 0..limit) {
         when (row) {
             0 -> {
-                println("start".repeat(columns))
+                println(" ${(1..columns).toList().joinToString(" ")} ")
             }
-            rows -> {
-                println("end".repeat(columns))
+            limit -> {
+                println("╚${"═╩".repeat(columns - 1)}═╝")
             }
             else -> {
-                println("middle".repeat(columns))
+                println("║${" ║".repeat(columns - 1)} ║")
             }
         }
     }
@@ -41,8 +42,8 @@ private fun drawBoard(): Pair<Int, Int> {
             errorMessage = getErrorMessage(userInput)
         } else {
             val list = userInput.filter { it.isDigit() }
-            rows = list.first().toInt()
-            columns = list.last().toInt()
+            rows = "${list.first()}".toInt()
+            columns = "${list.last()}".toInt()
         }
     } while (userInput != "" && !userInput.matches(CORRECT_BOARD_SIZE_REGEX))
     println("$firstPlayerName VS $secondPlayerName")
