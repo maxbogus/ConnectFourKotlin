@@ -9,6 +9,8 @@ val INVALID_COLUMN_BOARD_REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*\\d+\\s*\$)")
 enum class GameStatus {
     Preparing,
     MakeMove,
+    Win,
+    Draw,
     End
 }
 
@@ -49,7 +51,7 @@ fun main() {
         }
     } while (gameStatus != GameStatus.End)
 
-    showResult()
+    showResult(gameStatus, playerNames[currentPlayer])
 }
 
 fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
@@ -62,11 +64,15 @@ fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
 }
 
 fun playGame(board: MutableList<MutableList<String>>): Pair<GameStatus, MutableList<MutableList<String>>> {
-
     return Pair(GameStatus.End, board)
 }
 
-fun showResult() {
+fun showResult(gameStatus: GameStatus, winningPlayer: String) {
+    if (gameStatus == GameStatus.Win) {
+        println("Player $winningPlayer won")
+    } else if (gameStatus == GameStatus.Draw) {
+        println("It is a draw")
+    }
     println("Game over!")
 }
 
@@ -102,7 +108,7 @@ private fun drawBoard(): Triple<Int, Int, List<String>> {
     var columns = 7
     var errorMessage = ""
     do {
-        showBoardDemensionsMessage(errorMessage)
+        showBoardDimensionsMessage(errorMessage)
         val userInput = readLine()!!
         if (!userInput.matches(CORRECT_BOARD_SIZE_REGEX)) {
             errorMessage = getErrorMessage(userInput)
@@ -118,7 +124,7 @@ private fun drawBoard(): Triple<Int, Int, List<String>> {
     return Triple(rows, columns, playersNames)
 }
 
-private fun showBoardDemensionsMessage(errorMessage: String) {
+private fun showBoardDimensionsMessage(errorMessage: String) {
     if (errorMessage != "") {
         println(errorMessage)
     }
