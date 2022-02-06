@@ -1,5 +1,7 @@
 package connectfour
 
+import java.lang.Exception
+
 val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]{1}\\s*[xX]\\s*[5-9]{1}\\s*$)")
 val INVALID_ROW_BOARD_REGEX = Regex("(^\\s*\\d+\\s*[xX]\\s*[5-9]\\s*\$)")
 val INVALID_COLUMN_BOARD_REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*\\d+\\s*\$)")
@@ -24,19 +26,23 @@ fun main() {
         println("${playerNames[currentPlayer]}'s turn")
         val input = readLine()!!
         if (input != "end") {
-            val move = input.toInt()
-            val index = move - 1
-            if (move in 1..columns) {
-                val rowIndex = board[index].indexOf(" ")
-                if (rowIndex != -1) {
-                    board[index][rowIndex] = (if (currentPlayer == 0) "o" else "*")
-                    currentPlayer = if (currentPlayer == 0) 1 else 0
-                    gameStatus = GameStatus.Preparing
+            try {
+                val move = input.toInt()
+                val index = move - 1
+                if (move in 1..columns) {
+                    val rowIndex = board[index].indexOf(" ")
+                    if (rowIndex != -1) {
+                        board[index][rowIndex] = (if (currentPlayer == 0) "o" else "*")
+                        currentPlayer = if (currentPlayer == 0) 1 else 0
+                        gameStatus = GameStatus.Preparing
+                    } else {
+                        println("Column $move is full")
+                    }
                 } else {
-                    println("Column $move is full")
+                    println("The column number is out of range (1 - ${columns})")
                 }
-            } else {
-                println("The column number is out of range (1 - ${columns})")
+            } catch (_: Exception) {
+                println("Incorrect column number")
             }
         } else {
             gameStatus = GameStatus.End
