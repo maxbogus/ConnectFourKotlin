@@ -4,34 +4,94 @@ val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]{1}\\s*[xX]\\s*[5-9]{1}\\s*$)")
 val INVALID_ROW_BOARD_REGEX = Regex("(^\\s*\\d+\\s*[xX]\\s*[5-9]\\s*\$)")
 val INVALID_COLUMN_BOARD_REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*\\d+\\s*\$)")
 
-fun main() {
-    println("Connect Four")
-    val (rows, columns) = drawBoard()
-    drawBoard(rows, columns)
+enum class GameStatus {
+    Preparing,
+    MakeMove,
+    End
 }
 
-private fun drawBoard(rows: Int, columns: Int) {
+fun main() {
+    var gameStatus: GameStatus = GameStatus.Preparing
+    println("Connect Four")
+    val (rows, columns, playerNames: List<String>) = drawBoard()
+    val board: MutableList<MutableList<String>> = generateBoard(rows, columns)
+    var currentPlayer = 0
+    do {
+        if (gameStatus == GameStatus.Preparing) {
+            drawBoard(rows, columns, board)
+        }
+        gameStatus = GameStatus.MakeMove
+        println("${playerNames[currentPlayer]}'s turn")
+        val input = readLine()!!
+        if (input != "end") {
+            val move = input.toInt()
+            val index = move - 1
+            if (move in 1..columns) {
+                val rowIndex = board[index].indexOf(" ")
+                if (rowIndex != -1) {
+                    board[index][rowIndex] = (if (currentPlayer == 0) "o" else "*")
+                    currentPlayer = if (currentPlayer == 0) 1 else 0
+                    gameStatus = GameStatus.Preparing
+                } else {
+                    println("Column $move is full")
+                }
+            } else {
+                println("The column number is out of range (1 - ${columns})")
+            }
+        } else {
+            gameStatus = GameStatus.End
+        }
+    } while (gameStatus != GameStatus.End)
+
+    showResult()
+}
+
+fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
+    val board = mutableListOf<MutableList<String>>()
+    repeat(columns) { board.add(mutableListOf()) }
+    for (column in board) {
+        repeat(rows) { column.add(" ") }
+    }
+    return board
+}
+
+fun playGame(board: MutableList<MutableList<String>>): Pair<GameStatus, MutableList<MutableList<String>>> {
+
+    return Pair(GameStatus.End, board)
+}
+
+fun showResult() {
+    println("Game over!")
+}
+
+private fun drawBoard(rows: Int, columns: Int, board: MutableList<MutableList<String>>) {
     val limit = rows + 1
-    for (row in 0..limit) {
+    for (row in limit downTo 0) {
         when (row) {
-            0 -> {
+            limit -> {
                 println(" ${(1..columns).toList().joinToString(" ")} ")
             }
-            limit -> {
+            0 -> {
                 println("╚${"═╩".repeat(columns - 1)}═╝")
             }
             else -> {
-                println("║${" ║".repeat(columns - 1)} ║")
+                val list = mutableListOf<String>()
+                for (index in 0..columns - 1) {
+                    val value = board[index][row - 1]
+                    list.add(value)
+                }
+                println("║${list.joinToString("║")}║")
             }
         }
     }
 }
 
-private fun drawBoard(): Pair<Int, Int> {
+private fun drawBoard(): Triple<Int, Int, List<String>> {
     println("First player's name:")
     val firstPlayerName = readLine()!!
     println("Second player's name:")
     val secondPlayerName = readLine()!!
+    val playersNames: List<String> = listOf(firstPlayerName, secondPlayerName)
     var rows = 6
     var columns = 7
     var errorMessage = ""
@@ -48,7 +108,8 @@ private fun drawBoard(): Pair<Int, Int> {
     } while (userInput != "" && !userInput.matches(CORRECT_BOARD_SIZE_REGEX))
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
-    return Pair(rows, columns)
+
+    return Triple(rows, columns, playersNames)
 }
 
 private fun showBoardDemensionsMessage(errorMessage: String) {
