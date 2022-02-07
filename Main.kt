@@ -36,7 +36,7 @@ fun main() {
                     if (rowIndex != -1) {
                         board[index][rowIndex] = (if (currentPlayer == 0) "o" else "*")
                         currentPlayer = if (currentPlayer == 0) 1 else 0
-                        gameStatus = GameStatus.Preparing
+                        gameStatus = checkWin(board, columns, index, rowIndex, playerNames[currentPlayer])
                     } else {
                         println("Column $move is full")
                     }
@@ -49,7 +49,7 @@ fun main() {
         } else {
             gameStatus = GameStatus.End
         }
-    } while (gameStatus != GameStatus.End)
+    } while (gameStatus != GameStatus.End && gameStatus != GameStatus.Draw && gameStatus != GameStatus.Win)
 
     showResult(gameStatus, playerNames[currentPlayer])
 }
@@ -63,8 +63,22 @@ fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
     return board
 }
 
-fun playGame(board: MutableList<MutableList<String>>): Pair<GameStatus, MutableList<MutableList<String>>> {
-    return Pair(GameStatus.End, board)
+fun checkWin(board: MutableList<MutableList<String>>, columns: Int, columnIndex: Int, rowIndex: Int, playerSymbol: String): GameStatus {
+    // count draw
+    var filledColumns = 0
+    for (column in board) {
+        if (column.count { it != " " } == column.size) {
+            filledColumns++
+        }
+    }
+    if (filledColumns == columns) {
+        return GameStatus.Draw
+    }
+    // calculate win
+    // check horizon
+    // check vertices
+    // check diagonals
+    return GameStatus.Preparing
 }
 
 fun showResult(gameStatus: GameStatus, winningPlayer: String) {
