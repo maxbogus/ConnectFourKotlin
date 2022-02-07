@@ -1,6 +1,7 @@
 package connectfour
 
 import java.lang.Exception
+import kotlin.math.min
 
 val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]{1}\\s*[xX]\\s*[5-9]{1}\\s*$)")
 val INVALID_ROW_BOARD_REGEX = Regex("(^\\s*\\d+\\s*[xX]\\s*[5-9]\\s*\$)")
@@ -81,14 +82,43 @@ fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): Gam
     val result = GameStatus.Preparing
     val verticalList = mutableListOf<String>()
     val horizonList = mutableListOf<MutableList<String>>()
-    repeat(board[0].size) { horizonList.add(mutableListOf<String>()) }
-//    var diagonalSlashList = mutableListOf<MutableList<String>>
-//    var diagonalBackSlash = mutableListOf<MutableList<String>>
-
+    repeat(board[0].size) { horizonList.add(mutableListOf()) }
     for (column in 0..board.size - 1) {
         verticalList.add(board[column].joinToString(""))
         for (row in 0..board[column].size - 1) {
             horizonList[row].add(board[column][row])
+        }
+    }
+
+    val diagonalsSlashList = mutableListOf<MutableList<String>>()
+    val diagonalsBackSlashList = mutableListOf<MutableList<String>>()
+
+    val limit = min(board.size, board[0].size) - 1
+    repeat(limit * 2) { diagonalsSlashList.add(mutableListOf()) }
+    repeat(limit * 2) { diagonalsBackSlashList.add(mutableListOf()) }
+
+    for (index in 0..limit) {
+        for (shift in limit - 3 downTo 0) {
+            if (shift == 0) {
+                diagonalsSlashList[limit].add(board[index][index])
+            } else {
+                if ((limit + shift) <= diagonalsSlashList.size - 1 && (index + shift) <= limit) {
+                    diagonalsSlashList[limit-shift].add(board[index][index+shift])
+                    diagonalsSlashList[limit+shift].add(board[index+shift][index])
+                }
+            }
+        }
+    }
+
+    for (diagonal in diagonalsSlashList) {
+        if (diagonal.joinToString("").contains(winningPattern)) {
+            return GameStatus.Win
+        }
+    }
+
+    for (diagonal in diagonalsBackSlashList) {
+        if (diagonal.joinToString("").contains(winningPattern)) {
+            return GameStatus.Win
         }
     }
 
