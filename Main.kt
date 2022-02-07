@@ -2,6 +2,7 @@ package connectfour
 
 import java.lang.Exception
 import kotlin.math.min
+import kotlin.math.abs
 
 val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]{1}\\s*[xX]\\s*[5-9]{1}\\s*$)")
 val INVALID_ROW_BOARD_REGEX = Regex("(^\\s*\\d+\\s*[xX]\\s*[5-9]\\s*\$)")
@@ -105,6 +106,19 @@ fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): Gam
                 if ((limit + shift) <= diagonalsSlashList.size - 1 && (index + shift) <= limit) {
                     diagonalsSlashList[limit-shift].add(board[index][index+shift])
                     diagonalsSlashList[limit+shift].add(board[index+shift][index])
+                }
+            }
+        }
+    }
+
+    for (index in limit downTo 0) {
+        for (shift in limit - 3 downTo 0) {
+            if (shift == 0) {
+                diagonalsBackSlashList[limit].add(board[index][abs(index-4)])
+            } else {
+                if ((abs(index-4)+shift) <= diagonalsBackSlashList.size - 1 && (abs(index-4)+shift) <= limit) {
+                    diagonalsBackSlashList[limit-shift].add(board[index][abs(index-4)+shift])
+                    diagonalsBackSlashList[limit+shift].add(board[index-shift][abs(index-4)])
                 }
             }
         }
