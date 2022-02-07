@@ -76,8 +76,46 @@ fun checkWin(board: MutableList<MutableList<String>>, columns: Int, columnIndex:
     }
     // calculate win
     // check horizon
+        // find left limit
+            // set limit - 3
+            // set counter
+            // subtract limit
+            // if result is positive - save and exit
+            // else counter is not zero and result is negative - lower limit and lower counter
+            // repeat
+        // find opposite limit
+            // set limit - 3
+            // set counter
+            // add limit
+            // if result lower than boundary positive - save and exit
+            // else counter is not zero and result is higher than boundary - lower limit and lower counter
+            // repeat
+        // create sublist from left boundary till left + 3
+        // check if sublist list contains only playerSymbols
+        // move right
+        // repeat until right limit
     // check vertices
+        // find upper limit
+            // set limit - 3
+            // set counter
+            // subtract limit
+            // if result is positive - save and exit
+            // else counter is not zero and result is negative - lower limit and lower counter
+            // repeat
+        // fined lower limit
+            // set limit - 3
+            // set counter
+            // add limit
+            // if result lower than boundary positive - save and exit
+            // else counter is not zero and result is higher than boundary - lower limit and lower counter
+            // repeat
+        // create sublist from low boundary till low + 3 up
+        // check if sublist list contains only playerSymbols
+        // move up
+        // repeat until upper limit
     // check diagonals
+        // check slash
+        // check backslash
     return GameStatus.Preparing
 }
 
