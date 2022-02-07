@@ -41,8 +41,9 @@ fun main() {
                         } else {
                             checkWin(board, getPlayerSymbol(currentPlayer))
                         }
-                        currentPlayer = if (currentPlayer == 0) 1 else 0
-
+                        if (gameStatus == GameStatus.Preparing) {
+                            currentPlayer = if (currentPlayer == 0) 1 else 0
+                        }
                     } else {
                         println("Column $move is full")
                     }
@@ -50,7 +51,6 @@ fun main() {
                     println("The column number is out of range (1 - ${columns})")
                 }
             } catch (e: Exception) {
-                println(e)
                 println("Incorrect column number")
             }
         } else {
@@ -58,6 +58,9 @@ fun main() {
         }
     } while (gameStatus != GameStatus.End && gameStatus != GameStatus.Draw && gameStatus != GameStatus.Win)
 
+    if (gameStatus != GameStatus.End) {
+        drawBoard(rows, columns, board)
+    }
     showResult(gameStatus, playerNames[currentPlayer])
 }
 
@@ -78,7 +81,7 @@ fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): Gam
     val result = GameStatus.Preparing
     val verticalList = mutableListOf<String>()
     val horizonList = mutableListOf<MutableList<String>>()
-    repeat(board[0].size) {horizonList.add(mutableListOf<String>())}
+    repeat(board[0].size) { horizonList.add(mutableListOf<String>()) }
 //    var diagonalSlashList = mutableListOf<MutableList<String>>
 //    var diagonalBackSlash = mutableListOf<MutableList<String>>
 
@@ -96,7 +99,6 @@ fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): Gam
     }
 
     for (horizon in horizonList) {
-        println(horizon.joinToString(""))
         if (horizon.joinToString("").contains(winningPattern)) {
             return GameStatus.Win
         }
