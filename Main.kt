@@ -34,16 +34,23 @@ fun main() {
                 if (move in 1..columns) {
                     val rowIndex = board[index].indexOf(" ")
                     if (rowIndex != -1) {
-                        board[index][rowIndex] = (if (currentPlayer == 0) "o" else "*")
+                        board[index][rowIndex] = getPlayerSymbol(currentPlayer)
+
+                        gameStatus = if (checkDraw(board, columns)) {
+                            GameStatus.Draw
+                        } else {
+                            checkWin(board, getPlayerSymbol(currentPlayer))
+                        }
                         currentPlayer = if (currentPlayer == 0) 1 else 0
-                        gameStatus = checkWin(board, columns, index, rowIndex, playerNames[currentPlayer])
+
                     } else {
                         println("Column $move is full")
                     }
                 } else {
                     println("The column number is out of range (1 - ${columns})")
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                println(e)
                 println("Incorrect column number")
             }
         } else {
@@ -54,6 +61,8 @@ fun main() {
     showResult(gameStatus, playerNames[currentPlayer])
 }
 
+private fun getPlayerSymbol(currentPlayer: Int) = if (currentPlayer == 0) "o" else "*"
+
 fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
     val board = mutableListOf<MutableList<String>>()
     repeat(columns) { board.add(mutableListOf()) }
@@ -63,8 +72,43 @@ fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
     return board
 }
 
-fun checkWin(board: MutableList<MutableList<String>>, columns: Int, columnIndex: Int, rowIndex: Int, playerSymbol: String): GameStatus {
-    // count draw
+fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): GameStatus {
+    val winningPattern = playerSymbol.repeat(4)
+
+    val result = GameStatus.Preparing
+    val verticalList = mutableListOf<String>()
+    val horizonList = mutableListOf<MutableList<String>>()
+    repeat(board[0].size) {horizonList.add(mutableListOf<String>())}
+//    var diagonalSlashList = mutableListOf<MutableList<String>>
+//    var diagonalBackSlash = mutableListOf<MutableList<String>>
+
+    for (column in 0..board.size - 1) {
+        verticalList.add(board[column].joinToString(""))
+        for (row in 0..board[column].size - 1) {
+            horizonList[row].add(board[column][row])
+        }
+    }
+
+    for (vertical in verticalList) {
+        if (vertical.contains(winningPattern)) {
+            return GameStatus.Win
+        }
+    }
+
+    for (horizon in horizonList) {
+        println(horizon.joinToString(""))
+        if (horizon.joinToString("").contains(winningPattern)) {
+            return GameStatus.Win
+        }
+    }
+
+    return result
+}
+
+private fun checkDraw(
+    board: MutableList<MutableList<String>>,
+    columns: Int
+): Boolean {
     var filledColumns = 0
     for (column in board) {
         if (column.count { it != " " } == column.size) {
@@ -72,51 +116,9 @@ fun checkWin(board: MutableList<MutableList<String>>, columns: Int, columnIndex:
         }
     }
     if (filledColumns == columns) {
-        return GameStatus.Draw
+        return true
     }
-    // calculate win
-    // check horizon
-        // find left limit
-            // set limit - 3
-            // set counter
-            // subtract limit
-            // if result is positive - save and exit
-            // else counter is not zero and result is negative - lower limit and lower counter
-            // repeat
-        // find opposite limit
-            // set limit - 3
-            // set counter
-            // add limit
-            // if result lower than boundary positive - save and exit
-            // else counter is not zero and result is higher than boundary - lower limit and lower counter
-            // repeat
-        // create sublist from left boundary till left + 3
-        // check if sublist list contains only playerSymbols
-        // move right
-        // repeat until right limit
-    // check vertices
-        // find upper limit
-            // set limit - 3
-            // set counter
-            // subtract limit
-            // if result is positive - save and exit
-            // else counter is not zero and result is negative - lower limit and lower counter
-            // repeat
-        // fined lower limit
-            // set limit - 3
-            // set counter
-            // add limit
-            // if result lower than boundary positive - save and exit
-            // else counter is not zero and result is higher than boundary - lower limit and lower counter
-            // repeat
-        // create sublist from low boundary till low + 3 up
-        // check if sublist list contains only playerSymbols
-        // move up
-        // repeat until upper limit
-    // check diagonals
-        // check slash
-        // check backslash
-    return GameStatus.Preparing
+    return false
 }
 
 fun showResult(gameStatus: GameStatus, winningPlayer: String) {
