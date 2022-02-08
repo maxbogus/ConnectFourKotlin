@@ -110,7 +110,6 @@ private fun playGame(
                     println("The column number is out of range (1 - ${gameSetup.columns})")
                 }
             } catch (e: Exception) {
-                println(e)
                 println("Incorrect column number")
             }
         } else {
