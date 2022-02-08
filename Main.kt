@@ -30,7 +30,7 @@ fun main() {
     println("Connect Four")
     val gameSetup: GameSetup = setupBoard()
 
-    val scores: GameScores = GameScores(0, 0, 0, false, gameSetup.playersNames)
+    val scores = GameScores(0, 0, 0, false, gameSetup.playersNames)
     do {
         val (board, currentPlayer, gameStatus) = playGame(gameSetup, scores)
         if (gameStatus != GameStatus.End) {
