@@ -24,7 +24,14 @@ data class GameScores(
     var secondPlayerWins: Int,
     var endByExit: Boolean = false,
     var playerNames: List<String>
-)
+) {
+    fun currentPlayer(): Int {
+        return if (this.gameCounter % 2 != 0) 1 else 0
+    }
+    fun getSecondPlayer(): Int {
+        return if (this.gameCounter % 2 == 0) 1 else 0
+    }
+}
 
 fun main() {
     println("Connect Four")
@@ -55,9 +62,9 @@ fun main() {
                 ${scores.playerNames[0]}: ${scores.firstPlayerWins} ${scores.playerNames[1]}: ${scores.secondPlayerWins}
             """.trimIndent()
             )
-            scores.gameCounter++
         }
-    } while (scores.gameCounter <= gameSetup.numberOfGames && !scores.endByExit)
+        scores.gameCounter++
+    } while (gameSetup.numberOfGames > scores.gameCounter && !scores.endByExit)
 
     showResult(scores)
 }
@@ -68,7 +75,7 @@ private fun playGame(
 ): Triple<MutableList<MutableList<String>>, Int, GameStatus> {
     var gameStatus: GameStatus = GameStatus.Preparing
     val board: MutableList<MutableList<String>> = generateBoard(gameSetup.rows, gameSetup.columns)
-    var currentPlayer = 0
+    var currentPlayer = scores.currentPlayer()
     if (gameSetup.numberOfGames > 1) {
         println("Game #${scores.gameCounter + 1}")
     }
@@ -103,6 +110,7 @@ private fun playGame(
                     println("The column number is out of range (1 - ${gameSetup.columns})")
                 }
             } catch (e: Exception) {
+                println(e)
                 println("Incorrect column number")
             }
         } else {
