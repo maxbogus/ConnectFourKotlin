@@ -28,13 +28,13 @@ data class GameScores(
 
 fun main() {
     println("Connect Four")
-    val (rows, columns, playerNames: List<String>, numberOfGamesLimit) = setupBoard()
+    val gameSetup: GameSetup = setupBoard()
 
-    val scores: GameScores = GameScores(0, 0, 0, false, playerNames)
+    val scores: GameScores = GameScores(0, 0, 0, false, gameSetup.playersNames)
     do {
-        val (board, currentPlayer, gameStatus) = playGame(rows, columns, scores.playerNames)
+        val (board, currentPlayer, gameStatus) = playGame(gameSetup, scores)
         if (gameStatus != GameStatus.End) {
-            drawBoard(rows, columns, board)
+            drawBoard(gameSetup.rows, gameSetup.columns, board)
             if (gameStatus == GameStatus.Draw) {
                 scores.firstPlayerWins++
                 scores.secondPlayerWins++
@@ -48,7 +48,7 @@ fun main() {
         } else {
             scores.endByExit = true
         }
-        if (numberOfGamesLimit > 1) {
+        if (gameSetup.numberOfGames > 1) {
             println(
                 """
                 Score
@@ -57,36 +57,38 @@ fun main() {
             )
             scores.gameCounter++
         }
-    } while (scores.gameCounter <= numberOfGamesLimit && !scores.endByExit)
+    } while (scores.gameCounter <= gameSetup.numberOfGames && !scores.endByExit)
 
     showResult(scores)
 }
 
 private fun playGame(
-    rows: Int,
-    columns: Int,
-    playerNames: List<String>
+    gameSetup: GameSetup,
+    scores: GameScores
 ): Triple<MutableList<MutableList<String>>, Int, GameStatus> {
     var gameStatus: GameStatus = GameStatus.Preparing
-    val board: MutableList<MutableList<String>> = generateBoard(rows, columns)
+    val board: MutableList<MutableList<String>> = generateBoard(gameSetup.rows, gameSetup.columns)
     var currentPlayer = 0
+    if (gameSetup.numberOfGames > 1) {
+        println("Game #${scores.gameCounter + 1}")
+    }
     do {
         if (gameStatus == GameStatus.Preparing) {
-            drawBoard(rows, columns, board)
+            drawBoard(gameSetup.rows, gameSetup.columns, board)
         }
         gameStatus = GameStatus.MakeMove
-        println("${playerNames[currentPlayer]}'s turn")
+        println("${scores.playerNames[currentPlayer]}'s turn")
         val input = readLine()!!
         if (input != "end") {
             try {
                 val move = input.toInt()
                 val index = move - 1
-                if (move in 1..columns) {
+                if (move in 1..gameSetup.columns) {
                     val rowIndex = board[index].indexOf(" ")
                     if (rowIndex != -1) {
                         board[index][rowIndex] = getPlayerSymbol(currentPlayer)
 
-                        gameStatus = if (checkDraw(board, columns)) {
+                        gameStatus = if (checkDraw(board, gameSetup.columns)) {
                             GameStatus.Draw
                         } else {
                             checkWin(board, getPlayerSymbol(currentPlayer))
@@ -98,7 +100,7 @@ private fun playGame(
                         println("Column $move is full")
                     }
                 } else {
-                    println("The column number is out of range (1 - ${columns})")
+                    println("The column number is out of range (1 - ${gameSetup.columns})")
                 }
             } catch (e: Exception) {
                 println("Incorrect column number")
