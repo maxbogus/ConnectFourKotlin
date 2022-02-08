@@ -16,10 +16,58 @@ enum class GameStatus {
     End
 }
 
+data class GameSetup(val rows: Int, val columns: Int, val playersNames: List<String>, val numberOfGames: Int)
+
+data class GameScores(
+    var gameCounter: Int = 0,
+    var firstPlayerWins: Int = 0,
+    var secondPlayerWins: Int,
+    var endByExit: Boolean = false,
+    var playerNames: List<String>
+)
+
 fun main() {
-    var gameStatus: GameStatus = GameStatus.Preparing
     println("Connect Four")
-    val (rows, columns, playerNames: List<String>) = drawBoard()
+    val (rows, columns, playerNames: List<String>, numberOfGamesLimit) = setupBoard()
+
+    val scores: GameScores = GameScores(0, 0, 0, false, playerNames)
+    do {
+        val (board, currentPlayer, gameStatus) = playGame(rows, columns, scores.playerNames)
+        if (gameStatus != GameStatus.End) {
+            drawBoard(rows, columns, board)
+            if (gameStatus == GameStatus.Draw) {
+                scores.firstPlayerWins++
+                scores.secondPlayerWins++
+            } else {
+                if (currentPlayer == 0) {
+                    scores.firstPlayerWins++
+                } else {
+                    scores.secondPlayerWins++
+                }
+            }
+        } else {
+            scores.endByExit = true
+        }
+        if (numberOfGamesLimit > 1) {
+            println(
+                """
+                Score
+                ${scores.playerNames[0]}: ${scores.firstPlayerWins} ${scores.playerNames[1]}: ${scores.secondPlayerWins}
+            """.trimIndent()
+            )
+            scores.gameCounter++
+        }
+    } while (scores.gameCounter <= numberOfGamesLimit && !scores.endByExit)
+
+    showResult(scores)
+}
+
+private fun playGame(
+    rows: Int,
+    columns: Int,
+    playerNames: List<String>
+): Triple<MutableList<MutableList<String>>, Int, GameStatus> {
+    var gameStatus: GameStatus = GameStatus.Preparing
     val board: MutableList<MutableList<String>> = generateBoard(rows, columns)
     var currentPlayer = 0
     do {
@@ -59,11 +107,7 @@ fun main() {
             gameStatus = GameStatus.End
         }
     } while (gameStatus != GameStatus.End && gameStatus != GameStatus.Draw && gameStatus != GameStatus.Win)
-
-    if (gameStatus != GameStatus.End) {
-        drawBoard(rows, columns, board)
-    }
-    showResult(gameStatus, playerNames[currentPlayer])
+    return Triple(board, currentPlayer, gameStatus)
 }
 
 private fun getPlayerSymbol(currentPlayer: Int) = if (currentPlayer == 0) "o" else "*"
@@ -104,8 +148,8 @@ fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): Gam
                 diagonalsSlashList[limit].add(board[index][index])
             } else {
                 if ((limit + shift) <= diagonalsSlashList.size - 1 && (index + shift) <= limit) {
-                    diagonalsSlashList[limit-shift].add(board[index][index+shift])
-                    diagonalsSlashList[limit+shift].add(board[index+shift][index])
+                    diagonalsSlashList[limit - shift].add(board[index][index + shift])
+                    diagonalsSlashList[limit + shift].add(board[index + shift][index])
                 }
             }
         }
@@ -114,11 +158,11 @@ fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): Gam
     for (index in limit downTo 0) {
         for (shift in limit - 3 downTo 0) {
             if (shift == 0) {
-                diagonalsBackSlashList[limit].add(board[index][abs(index-4)])
+                diagonalsBackSlashList[limit].add(board[index][abs(index - 4)])
             } else {
-                if ((abs(index-4)+shift) <= diagonalsBackSlashList.size - 1 && (abs(index-4)+shift) <= limit) {
-                    diagonalsBackSlashList[limit-shift].add(board[index][abs(index-4)+shift])
-                    diagonalsBackSlashList[limit+shift].add(board[index-shift][abs(index-4)])
+                if ((abs(index - 4) + shift) <= diagonalsBackSlashList.size - 1 && (abs(index - 4) + shift) <= limit) {
+                    diagonalsBackSlashList[limit - shift].add(board[index][abs(index - 4) + shift])
+                    diagonalsBackSlashList[limit + shift].add(board[index - shift][abs(index - 4)])
                 }
             }
         }
@@ -167,11 +211,13 @@ private fun checkDraw(
     return false
 }
 
-fun showResult(gameStatus: GameStatus, winningPlayer: String) {
-    if (gameStatus == GameStatus.Win) {
-        println("Player $winningPlayer won")
-    } else if (gameStatus == GameStatus.Draw) {
-        println("It is a draw")
+fun showResult(scores: GameScores) {
+    if (!scores.endByExit) {
+        if (scores.firstPlayerWins != scores.secondPlayerWins) {
+            println("Player ${if (scores.firstPlayerWins > scores.secondPlayerWins) scores.playerNames[0] else scores.playerNames[1]} won")
+        } else {
+            println("It is a draw")
+        }
     }
     println("Game over!")
 }
@@ -198,7 +244,7 @@ private fun drawBoard(rows: Int, columns: Int, board: MutableList<MutableList<St
     }
 }
 
-private fun drawBoard(): Triple<Int, Int, List<String>> {
+private fun setupBoard(): GameSetup {
     println("First player's name:")
     val firstPlayerName = readLine()!!
     println("Second player's name:")
@@ -218,10 +264,30 @@ private fun drawBoard(): Triple<Int, Int, List<String>> {
             columns = "${list.last()}".toInt()
         }
     } while (userInput != "" && !userInput.matches(CORRECT_BOARD_SIZE_REGEX))
+    println(
+        """
+        Do you want to play single or multiple games?
+        For a single game, input 1 or press Enter
+        Input a number of games:
+    """.trimIndent()
+    )
+    var numberOfGames: Int = -1
+    do {
+        val input: String = readLine()!!
+        if (input == "") {
+            numberOfGames = 1
+        }
+        try {
+            numberOfGames = input.toInt()
+        } catch (_: Exception) {
+
+        }
+    } while (input != "" && numberOfGames < 1)
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
+    println(if (numberOfGames == 1) "Single game" else "Total $numberOfGames games")
 
-    return Triple(rows, columns, playersNames)
+    return GameSetup(rows, columns, playersNames, numberOfGames)
 }
 
 private fun showBoardDimensionsMessage(errorMessage: String) {
