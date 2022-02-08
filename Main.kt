@@ -274,15 +274,15 @@ private fun setupBoard(): GameSetup {
             columns = "${list.last()}".toInt()
         }
     } while (userInput != "" && !userInput.matches(CORRECT_BOARD_SIZE_REGEX))
-    println(
-        """
+    var numberOfGames: Int = -1
+    do {
+        println(
+            """
         Do you want to play single or multiple games?
         For a single game, input 1 or press Enter
         Input a number of games:
     """.trimIndent()
-    )
-    var numberOfGames: Int = -1
-    do {
+        )
         val input: String = readLine()!!
         if (input == "") {
             numberOfGames = 1
@@ -292,7 +292,9 @@ private fun setupBoard(): GameSetup {
         } catch (_: Exception) {
 
         }
-        println("Invalid input")
+        if (input != "" && numberOfGames < 1 ) {
+            println("Invalid input")
+        }
     } while (input != "" && numberOfGames < 1)
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
