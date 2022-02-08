@@ -28,6 +28,7 @@ data class GameScores(
     fun currentPlayer(): Int {
         return if (this.gameCounter % 2 != 0) 1 else 0
     }
+
     fun getSecondPlayer(): Int {
         return if (this.gameCounter % 2 == 0) 1 else 0
     }
@@ -48,13 +49,16 @@ fun main() {
             } else {
                 if (currentPlayer == 0) {
                     scores.firstPlayerWins++
+                    scores.firstPlayerWins++
                 } else {
+                    scores.secondPlayerWins++
                     scores.secondPlayerWins++
                 }
             }
         } else {
             scores.endByExit = true
         }
+        showResult(gameStatus, scores)
         if (gameSetup.numberOfGames > 1) {
             println(
                 """
@@ -66,7 +70,7 @@ fun main() {
         scores.gameCounter++
     } while (gameSetup.numberOfGames > scores.gameCounter && !scores.endByExit)
 
-    showResult(scores)
+    println("Game over!")
 }
 
 private fun playGame(
@@ -220,15 +224,12 @@ private fun checkDraw(
     return false
 }
 
-fun showResult(scores: GameScores) {
-    if (!scores.endByExit) {
-        if (scores.firstPlayerWins != scores.secondPlayerWins) {
-            println("Player ${if (scores.firstPlayerWins > scores.secondPlayerWins) scores.playerNames[0] else scores.playerNames[1]} won")
-        } else {
-            println("It is a draw")
-        }
+fun showResult(gameStatus: GameStatus, scores: GameScores) {
+    if (gameStatus == GameStatus.Win) {
+        println("Player ${if (scores.firstPlayerWins > scores.secondPlayerWins) scores.playerNames[0] else scores.playerNames[1]} won")
+    } else if (gameStatus == GameStatus.Draw) {
+        println("It is a draw")
     }
-    println("Game over!")
 }
 
 private fun drawBoard(rows: Int, columns: Int, board: MutableList<MutableList<String>>) {
