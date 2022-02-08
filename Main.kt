@@ -292,6 +292,7 @@ private fun setupBoard(): GameSetup {
         } catch (_: Exception) {
 
         }
+        println("Invalid input")
     } while (input != "" && numberOfGames < 1)
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
