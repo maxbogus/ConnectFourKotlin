@@ -1,322 +1,164 @@
-package connectfour
+package sorting
 
-import java.lang.Exception
-import kotlin.math.min
-import kotlin.math.abs
+private const val SORT_ARGUMENT = "-sortIntegers"
+private const val DATA_TYPE_ARGUMENT = "-dataType"
 
-val CORRECT_BOARD_SIZE_REGEX = Regex("(^\\s*[5-9]{1}\\s*[xX]\\s*[5-9]{1}\\s*$)")
-val INVALID_ROW_BOARD_REGEX = Regex("(^\\s*\\d+\\s*[xX]\\s*[5-9]\\s*\$)")
-val INVALID_COLUMN_BOARD_REGEX = Regex("(^\\s*[5-9]\\s*[xX]\\s*\\d+\\s*\$)")
+fun main(args: Array<String>) {
+    val lines: MutableList<String> = parseInput()
 
-enum class GameStatus {
-    Preparing,
-    MakeMove,
-    Win,
-    Draw,
-    End
-}
-
-data class GameSetup(val rows: Int, val columns: Int, val playersNames: List<String>, val numberOfGames: Int)
-
-data class GameScores(
-    var gameCounter: Int = 0,
-    var firstPlayerWins: Int = 0,
-    var secondPlayerWins: Int,
-    var endByExit: Boolean = false,
-    var playerNames: List<String>
-) {
-    fun currentPlayer(): Int {
-        return if (this.gameCounter % 2 != 0) 1 else 0
-    }
-
-    fun getSecondPlayer(): Int {
-        return if (this.gameCounter % 2 == 0) 1 else 0
-    }
-}
-
-fun main() {
-    println("Connect Four")
-    val gameSetup: GameSetup = setupBoard()
-
-    val scores = GameScores(0, 0, 0, false, gameSetup.playersNames)
-    do {
-        val (board, currentPlayer, gameStatus) = playGame(gameSetup, scores)
-        if (gameStatus != GameStatus.End) {
-            drawBoard(gameSetup.rows, gameSetup.columns, board)
-            if (gameStatus == GameStatus.Draw) {
-                scores.firstPlayerWins++
-                scores.secondPlayerWins++
-            } else {
-                if (currentPlayer == 0) {
-                    scores.firstPlayerWins++
-                    scores.firstPlayerWins++
-                } else {
-                    scores.secondPlayerWins++
-                    scores.secondPlayerWins++
-                }
-            }
+    if (args.contains(SORT_ARGUMENT)) {
+        sortInts(lines)
+    } else {
+        val type = if (args[0] == DATA_TYPE_ARGUMENT) {
+            args[1]
         } else {
-            scores.endByExit = true
+            "word"
         }
-        showResult(gameStatus, scores)
-        if (gameSetup.numberOfGames > 1) {
-            println(
-                """
-                Score
-                ${scores.playerNames[0]}: ${scores.firstPlayerWins} ${scores.playerNames[1]}: ${scores.secondPlayerWins}
-            """.trimIndent()
-            )
+        
+        when (type) {
+            "long" -> countGreatestNumber(lines)
+            "word" -> findLongestWord(lines)
+            else -> findLongestLine(lines)
         }
-        scores.gameCounter++
-    } while (gameSetup.numberOfGames > scores.gameCounter && !scores.endByExit)
-
-    println("Game over!")
+    }
 }
 
-private fun playGame(
-    gameSetup: GameSetup,
-    scores: GameScores
-): Triple<MutableList<MutableList<String>>, Int, GameStatus> {
-    var gameStatus: GameStatus = GameStatus.Preparing
-    val board: MutableList<MutableList<String>> = generateBoard(gameSetup.rows, gameSetup.columns)
-    var currentPlayer = scores.currentPlayer()
-    if (gameSetup.numberOfGames > 1) {
-        println("Game #${scores.gameCounter + 1}")
+fun sortInts(lines: MutableList<String>) {
+    val unsortedArray = parseStringsIntoArray(lines)
+
+    val sortedArray: List<Int> = mergeSort(unsortedArray)
+
+    println("Total numbers: ${sortedArray.size}.")
+    println("Sorted data: ${sortedArray.joinToString(" ")}")
+}
+
+fun mergeSort(unsortedArray: MutableList<Int>): List<Int> {
+    if (unsortedArray.size <= 1) {
+        return unsortedArray
     }
+    var leftList = unsortedArray.subList(0, unsortedArray.size / 2).toMutableList()
+    var rightList = unsortedArray.subList(unsortedArray.size / 2, unsortedArray.lastIndex + 1).toMutableList()
+
+    leftList = mergeSort(leftList) as MutableList<Int>
+    rightList = mergeSort(rightList) as MutableList<Int>
+
+    return mergeList(leftList, rightList)
+}
+
+fun mergeList(leftList: MutableList<Int>, rightList: MutableList<Int>): List<Int> {
+    val result = mutableListOf<Int>()
+
     do {
-        if (gameStatus == GameStatus.Preparing) {
-            drawBoard(gameSetup.rows, gameSetup.columns, board)
-        }
-        gameStatus = GameStatus.MakeMove
-        println("${scores.playerNames[currentPlayer]}'s turn")
-        val input = readLine()!!
-        if (input != "end") {
-            try {
-                val move = input.toInt()
-                val index = move - 1
-                if (move in 1..gameSetup.columns) {
-                    val rowIndex = board[index].indexOf(" ")
-                    if (rowIndex != -1) {
-                        board[index][rowIndex] = getPlayerSymbol(currentPlayer)
-
-                        gameStatus = if (checkDraw(board, gameSetup.columns)) {
-                            GameStatus.Draw
-                        } else {
-                            checkWin(board, getPlayerSymbol(currentPlayer))
-                        }
-                        if (gameStatus == GameStatus.Preparing) {
-                            currentPlayer = if (currentPlayer == 0) 1 else 0
-                        }
-                    } else {
-                        println("Column $move is full")
-                    }
-                } else {
-                    println("The column number is out of range (1 - ${gameSetup.columns})")
-                }
-            } catch (e: Exception) {
-                println("Incorrect column number")
-            }
+        if (leftList.first() <= rightList.first()) {
+            result.add(leftList.first())
+            leftList.removeAt(0)
         } else {
-            gameStatus = GameStatus.End
+            result.add(rightList.first())
+            rightList.removeAt(0)
         }
-    } while (gameStatus != GameStatus.End && gameStatus != GameStatus.Draw && gameStatus != GameStatus.Win)
-    return Triple(board, currentPlayer, gameStatus)
-}
+    } while (leftList.size > 0 && rightList.size > 0)
 
-private fun getPlayerSymbol(currentPlayer: Int) = if (currentPlayer == 0) "o" else "*"
-
-fun generateBoard(rows: Int, columns: Int): MutableList<MutableList<String>> {
-    val board = mutableListOf<MutableList<String>>()
-    repeat(columns) { board.add(mutableListOf()) }
-    for (column in board) {
-        repeat(rows) { column.add(" ") }
-    }
-    return board
-}
-
-fun checkWin(board: MutableList<MutableList<String>>, playerSymbol: String): GameStatus {
-    val winningPattern = playerSymbol.repeat(4)
-
-    val result = GameStatus.Preparing
-    val verticalList = mutableListOf<String>()
-    val horizonList = mutableListOf<MutableList<String>>()
-    repeat(board[0].size) { horizonList.add(mutableListOf()) }
-    for (column in 0..board.size - 1) {
-        verticalList.add(board[column].joinToString(""))
-        for (row in 0..board[column].size - 1) {
-            horizonList[row].add(board[column][row])
+    do {
+        if (leftList.size > 0) {
+            result.add(leftList.first())
+            leftList.removeAt(0)
         }
-    }
+    } while (leftList.size > 0)
 
-    val diagonalsSlashList = mutableListOf<MutableList<String>>()
-    val diagonalsBackSlashList = mutableListOf<MutableList<String>>()
-
-    val limit = min(board.size, board[0].size) - 1
-    repeat(limit * 2) { diagonalsSlashList.add(mutableListOf()) }
-    repeat(limit * 2) { diagonalsBackSlashList.add(mutableListOf()) }
-
-    for (index in 0..limit) {
-        for (shift in limit - 3 downTo 0) {
-            if (shift == 0) {
-                diagonalsSlashList[limit].add(board[index][index])
-            } else {
-                if ((limit + shift) <= diagonalsSlashList.size - 1 && (index + shift) <= limit) {
-                    diagonalsSlashList[limit - shift].add(board[index][index + shift])
-                    diagonalsSlashList[limit + shift].add(board[index + shift][index])
-                }
-            }
+    do {
+        if (rightList.size > 0) {
+            result.add(rightList.first())
+            rightList.removeAt(0)
         }
-    }
-
-    for (index in limit downTo 0) {
-        for (shift in limit - 3 downTo 0) {
-            if (shift == 0) {
-                diagonalsBackSlashList[limit].add(board[index][abs(index - 4)])
-            } else {
-                if ((abs(index - 4) + shift) <= diagonalsBackSlashList.size - 1 && (abs(index - 4) + shift) <= limit) {
-                    diagonalsBackSlashList[limit - shift].add(board[index][abs(index - 4) + shift])
-                    diagonalsBackSlashList[limit + shift].add(board[index - shift][abs(index - 4)])
-                }
-            }
-        }
-    }
-
-    for (diagonal in diagonalsSlashList) {
-        if (diagonal.joinToString("").contains(winningPattern)) {
-            return GameStatus.Win
-        }
-    }
-
-    for (diagonal in diagonalsBackSlashList) {
-        if (diagonal.joinToString("").contains(winningPattern)) {
-            return GameStatus.Win
-        }
-    }
-
-    for (vertical in verticalList) {
-        if (vertical.contains(winningPattern)) {
-            return GameStatus.Win
-        }
-    }
-
-    for (horizon in horizonList) {
-        if (horizon.joinToString("").contains(winningPattern)) {
-            return GameStatus.Win
-        }
-    }
+    } while (rightList.size > 0)
 
     return result
 }
 
-private fun checkDraw(
-    board: MutableList<MutableList<String>>,
-    columns: Int
-): Boolean {
-    var filledColumns = 0
-    for (column in board) {
-        if (column.count { it != " " } == column.size) {
-            filledColumns++
+private fun parseStringsIntoArray(lines: MutableList<String>): MutableList<Int> {
+    val unsortedArray = mutableListOf<Int>()
+    if (lines.filter { it != "" }.isEmpty()) {
+        return unsortedArray
+    }
+    lines.forEach { s -> s.split("\\s+".toRegex()).map { it.toInt() }.forEach { unsortedArray.add(it) } }
+    return unsortedArray
+}
+
+fun findLongestLine(lines: MutableList<String>) {
+    var largestLine = ""
+    for (line in lines) {
+        if (line.length > largestLine.length) {
+            largestLine = line
         }
     }
-    if (filledColumns == columns) {
-        return true
-    }
-    return false
+    val count = lines.count { it == largestLine }
+
+    println("Total lines: ${lines.size}.")
+    println("The longest line:")
+    println(largestLine)
+    println("(${count} time(s), ${calculatePercentage(count.toFloat(), lines.size.toFloat())}%).")
 }
 
-fun showResult(gameStatus: GameStatus, scores: GameScores) {
-    if (gameStatus == GameStatus.Win) {
-        println("Player ${if (scores.firstPlayerWins > scores.secondPlayerWins) scores.playerNames[0] else scores.playerNames[1]} won")
-    } else if (gameStatus == GameStatus.Draw) {
-        println("It is a draw")
-    }
-}
-
-private fun drawBoard(rows: Int, columns: Int, board: MutableList<MutableList<String>>) {
-    val limit = rows + 1
-    for (row in limit downTo 0) {
-        when (row) {
-            limit -> {
-                println(" ${(1..columns).toList().joinToString(" ")} ")
+fun findLongestWord(lines: MutableList<String>) {
+    var longestWord = ""
+    var longestWordCounter = 1
+    var totalWordsCounter = 0
+    for (line in lines) {
+        val words = line.split("\\s+".toRegex())
+        for (word in words) {
+            if (word.length > longestWord.length) {
+                longestWord = word
+                longestWordCounter = 1
+            } else if (word == longestWord) {
+                longestWordCounter += 1
             }
-            0 -> {
-                println("╚${"═╩".repeat(columns - 1)}═╝")
-            }
-            else -> {
-                val list = mutableListOf<String>()
-                for (index in 0..columns - 1) {
-                    val value = board[index][row - 1]
-                    list.add(value)
-                }
-                println("║${list.joinToString("║")}║")
-            }
+            totalWordsCounter++
         }
     }
+    println("Total words: ${totalWordsCounter}.")
+    println(
+        "The longest word: $longestWord (${longestWordCounter} time(s), ${
+            calculatePercentage(
+                longestWordCounter.toFloat(),
+                totalWordsCounter.toFloat()
+            )
+        }%)."
+    )
 }
 
-private fun setupBoard(): GameSetup {
-    println("First player's name:")
-    val firstPlayerName = readLine()!!
-    println("Second player's name:")
-    val secondPlayerName = readLine()!!
-    val playersNames: List<String> = listOf(firstPlayerName, secondPlayerName)
-    var rows = 6
-    var columns = 7
-    var errorMessage = ""
+private fun calculatePercentage(longestWordCounter: Float, totalWordsCounter: Float) =
+    (longestWordCounter / (totalWordsCounter / 100.0)).toInt()
+
+private fun countGreatestNumber(lines: MutableList<String>) {
+    val numbers: MutableList<Int> = mutableListOf()
+    for (line in lines) {
+        for (number in line.split("\\s+".toRegex()).map { it.toInt() }) {
+            numbers.add(number)
+        }
+    }
+
+    var greatestNumber: Int = Int.MIN_VALUE
+    var counter = 0
+    for (number in numbers) {
+        if (number > greatestNumber) {
+            greatestNumber = number
+            counter = 1
+        } else if (number == greatestNumber) {
+            counter++
+        }
+    }
+
+    println("Total numbers: ${numbers.size}.")
+    println("The greatest number: $greatestNumber (${counter} time(s)).")
+}
+
+private fun parseInput(): MutableList<String> {
+    val lines = mutableListOf<String>()
     do {
-        showBoardDimensionsMessage(errorMessage)
-        val userInput = readLine()!!
-        if (!userInput.matches(CORRECT_BOARD_SIZE_REGEX)) {
-            errorMessage = getErrorMessage(userInput)
-        } else {
-            val list = userInput.filter { it.isDigit() }
-            rows = "${list.first()}".toInt()
-            columns = "${list.last()}".toInt()
+        val input = readLine()
+        if (input != null) {
+            lines.add(input)
         }
-    } while (userInput != "" && !userInput.matches(CORRECT_BOARD_SIZE_REGEX))
-    var numberOfGames: Int = -1
-    do {
-        println(
-            """
-        Do you want to play single or multiple games?
-        For a single game, input 1 or press Enter
-        Input a number of games:
-    """.trimIndent()
-        )
-        val input: String = readLine()!!
-        if (input == "") {
-            numberOfGames = 1
-        }
-        try {
-            numberOfGames = input.toInt()
-        } catch (_: Exception) {
-
-        }
-        if (input != "" && numberOfGames < 1 ) {
-            println("Invalid input")
-        }
-    } while (input != "" && numberOfGames < 1)
-    println("$firstPlayerName VS $secondPlayerName")
-    println("$rows X $columns board")
-    println(if (numberOfGames == 1) "Single game" else "Total $numberOfGames games")
-
-    return GameSetup(rows, columns, playersNames, numberOfGames)
-}
-
-private fun showBoardDimensionsMessage(errorMessage: String) {
-    if (errorMessage != "") {
-        println(errorMessage)
-    }
-    println("Set the board dimensions (Rows x Columns)")
-    println("Press Enter for default (6 x 7)")
-}
-
-private fun getErrorMessage(string: String): String {
-    return if (string.matches(INVALID_ROW_BOARD_REGEX)) {
-        "Board rows should be from 5 to 9"
-    } else if (string.matches(INVALID_COLUMN_BOARD_REGEX)) {
-        "Board columns should be from 5 to 9"
-    } else {
-        "Invalid input"
-    }
+    } while (input != null)
+    return lines
 }
